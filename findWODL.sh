@@ -39,51 +39,86 @@ function preparation
 function iterate
 {
     #TODO: add logging of all inputs to let to share not final word
+
+    #TODO: inverse the order of letters filtering to following: GREEN, YELLOW, GREY.
+    #      due to it could be the same letter for example Yellow and Grey.
+
     read -p "Put all your GREY letters together (if any, or empty input): " GREY
-    for i in $(seq 1 ${#GREY})
-    do
+    for i in $(seq 1 ${#GREY}); do
         cat ${FILE2} | grep -v ${GREY:i-1:1} > ${FILE3}
         mv ${FILE3} ${FILE2}
     done
     echo "Now you still have $(cat ${FILE2} | wc -l) words in the dict."
 
-    #TODO: take into account the incorrect positions
-    read -p "Put all your YELLOW letters together if any, or empty input): " YELLOW
-    for i in $(seq 1 ${#YELLOW})
-    do
-        cat ${FILE2} | grep ${YELLOW:i-1:1} > ${FILE3}
+    read -p "Put all your YELLOW letters if any in format \"3e 4r\": " YELLOW
+    if [[ x${YELLOW} != "x" ]]; then
+        key=""
+        for i in $(seq 1 ${LEN}); do
+            key=${key}"?"
+        done
+        for yellow in ${YELLOW}; do
+            pos=$(echo ${yellow} | cut -c1-1)
+            let=$(echo ${yellow} | cut -c2-2)
+
+            cat ${FILE2} | grep ${let} > ${FILE3}
+            mv ${FILE3} ${FILE2}
+            if [[ $? != 0 ]]; then
+                echo "Sorry, no variants left for your input :-("
+                exit 0
+            fi
+
+            key=$(echo ${key} | sed s/./${let}/${pos})
+        done
+        while read line; do
+            if [[ $line = *${key} ]]; then
+                echo >/dev/null # ignoring match
+            else
+                echo "$line" >> ${FILE3}
+            fi
+        done < ${FILE2}
         mv ${FILE3} ${FILE2}
-    done
-    echo "Now you still have $(cat ${FILE2} | wc -l) words in the dict."
-
-    read -p "Now put all your GREEN letters if any in format (3e 4r): " GREEN
-    key=""
-    for i in $(seq 1 ${LEN}); do
-        key=${key}"?"
-    done
-    for green in ${GREEN}; do
-        pos=$(echo ${green} | cut -c1-1)
-        let=$(echo ${green} | cut -c2-2)
-        key=$(echo ${key} | sed s/./${let}/${pos})
-    done
-
-    while read line; do
-        if [[ $line = *${key} ]]; then
-            echo "$line" >> ${FILE3}
+        if [[ $? != 0 ]]; then
+            echo "Sorry, no variants left for your input :-("
+            exit 0
+        else
+            echo "Now you still have $(cat ${FILE2} | wc -l) words in the dict."
         fi
-    done < ${FILE2}
-    mv ${FILE3} ${FILE2}
+    fi
+
+    read -p "Now put all your GREEN letters if any in format \"3e 4r\": " GREEN
+    if [[ x${GREEN} != "x" ]]; then
+        key=""
+        for i in $(seq 1 ${LEN}); do
+            key=${key}"?"
+        done
+        for green in ${GREEN}; do
+            pos=$(echo ${green} | cut -c1-1)
+            let=$(echo ${green} | cut -c2-2)
+            key=$(echo ${key} | sed s/./${let}/${pos})
+        done
+
+        while read line; do
+            if [[ $line = *${key} ]]; then
+                echo "$line" >> ${FILE3}
+            fi
+        done < ${FILE2}
+        mv ${FILE3} ${FILE2}
+        if [[ $? != 0 ]]; then
+            echo "Sorry, no variants left for your input :-("
+            exit 0
+        fi
+    fi
 
     read -p "Now you still have $(cat ${FILE2} | wc -l) words in the dict. Press any key when ready to choose one of them: " -n 1 emptyInput <&1
     less ${FILE2}
 }
 
 # Main
-if [[ $# == 1 && $1 > 3 && $1 < 8 ]];then
+if [[ $# == 1 && $1 > 3 && $1 < 9 ]];then
     LEN=$1
 else
     read -p "Enter letter count: " LEN
-    if [[ ${LEN} < 3 || ${LEN} > 7 ]];then
+    if [[ ${LEN} < 3 || ${LEN} > 8 ]];then
         echo "Seems wrong input"
         exit 1
     fi
@@ -98,3 +133,4 @@ while : ; do
 done
 
 rm ${FILE2} ${FILE3} 2>&1 >/dev/null
+
