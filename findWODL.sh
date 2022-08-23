@@ -1,18 +1,16 @@
 #!/bin/bash
 
-LEN=3
-FILE="word_list_english_uppercase_spell_checked.txt"
 FILE2=$(mktemp)
 
-function preparation
-{
+function preparation() {
     if [[ ! -f ${LEN} ]];then
         echo "Creating dict for ${LEN}-lettered words. Please, be patient..."
+        FILE="word_list_english_uppercase_spell_checked.txt"
         if [[ ! -f ${FILE} ]];then
             #TODO: add another dictionary(s) to concatenate with. Maybe some crypto related and modern one?
             echo "Prepairing the source dict"
             if [[ ! -f ${FILE}.7z ]];then
-                wget --quiet "http://www.aaabbb.de/WordList/${FILE}.7z" 2>&1 >/dev/null
+                wget --quiet "http://www.aaabbb.de/WordList/${FILE}.7z" >/dev/null 2>&1
                 if [[ $? != 0 ]]; then
                     echo "Possibly connection issue. Try to retry"
                     exit 2 # network issue?
@@ -22,10 +20,10 @@ function preparation
                 echo "Need 7z installed first"
                 sudo apt install p7zip
             fi
-            p7zip -d ${FILE}.7z 2>&1 >/dev/null
+            p7zip -d ${FILE}.7z >/dev/null 2>&1
             #TODO: check result and what?
 
-            cat ${FILE} | tr [:upper:] [:lower:] | sort | uniq > ${FILE2}
+            strings -n 3 ${FILE} | tr [:upper:] [:lower:] | sort | uniq > ${FILE2}
             mv ${FILE2} ${FILE}
         fi
 
@@ -40,11 +38,13 @@ function preparation
     echo "There are $(cat ${LEN} | wc -l) words in the dict. Let's filter some"
 }
 
-function iterate
-{
+function iterate() {
+    colorNO='\e[0m' && colorGREEN='\e[1;32m' && colorYELLOW='\e[1;33m' && colorGREY='\e[1;30m'
+
     #TODO: add logging of all inputs to let to share not final word
 
-    read -p "Now put all your GREEN letters, if any, in format \"3e 4r\": " GREEN
+    echo -e "Now put all your ${colorGREEN}GREEN${colorNO} letters, if any, in format \"3e 4r\""
+    read -p "> " GREEN
     if [[ x${GREEN} != "x" ]]; then
         key=""
         for i in $(seq 1 ${LEN}); do
@@ -61,7 +61,7 @@ function iterate
                 echo "$line" >> ${FILE3}
             fi
         done < ${FILE2}
-        mv ${FILE3} ${FILE2}
+        mv ${FILE3} ${FILE2} >/dev/null 2>&1
         if [[ $? != 0 ]]; then
             echo "Sorry, no variants left for your input :-("
             exit 0
@@ -69,7 +69,8 @@ function iterate
         echo "Now you still have $(cat ${FILE2} | wc -l) words in the dict."
     fi
 
-    read -p "Put all your YELLOW letters, if any, in format \"3e 4r\": " YELLOW
+    echo -e "Put all your ${colorYELLOW}YELLOW${colorNO} letters, if any, in format \"3e 4r\""
+    read -p "> " YELLOW
     if [[ x${YELLOW} != "x" ]]; then
         key=""
         for i in $(seq 1 ${LEN}); do
@@ -80,7 +81,7 @@ function iterate
             let=$(echo ${yellow} | cut -c2-2 | tr [:upper:] [:lower:])
 
             cat ${FILE2} | grep ${let} > ${FILE3}
-            mv ${FILE3} ${FILE2}
+            mv ${FILE3} ${FILE2} >/dev/null 2>&1
             if [[ $? != 0 ]]; then
                 echo "Sorry, no variants left for your input :-("
                 exit 0
@@ -95,7 +96,7 @@ function iterate
                 echo "$line" >> ${FILE3}
             fi
         done < ${FILE2}
-        mv ${FILE3} ${FILE2}
+        mv ${FILE3} ${FILE2} >/dev/null 2>&1
         if [[ $? != 0 ]]; then
             echo "Sorry, no variants left for your input :-("
             exit 0
@@ -104,7 +105,8 @@ function iterate
         fi
     fi
 
-    read -p "Put all your GREY letters together, if any: " GREY
+    echo -e "Put all your ${colorGREY}GREY${colorNO} letters together, if any"
+    read -p "> " GREY
     if [[ x${GREY} != "x" ]]; then
         for i in $(seq 1 ${#GREY}); do
             let=$(echo ${GREY:i-1:1} | tr [:upper:] [:lower:])
