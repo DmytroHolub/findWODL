@@ -53,7 +53,7 @@ function iterate() {
         for green in ${GREEN}; do
             pos=$(echo ${green} | cut -c1-1)
             let=$(echo ${green} | cut -c2-2 | tr [:upper:] [:lower:])
-            key=$(echo ${key} | sed s/./${let}/${pos})
+            key=$(printf "%s\n" "${key}" | sed s/./${let}/${pos})
         done
 
         while read line; do
@@ -87,7 +87,7 @@ function iterate() {
                 exit 0
             fi
 
-            key=$(echo ${key} | sed s/./${let}/${pos})
+            key=$(printf "%s\n" "${key}" | sed s/./${let}/${pos})
         done
         while read line; do
             if [[ $line = *${key} ]]; then
