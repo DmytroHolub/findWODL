@@ -72,11 +72,11 @@ function iterate() {
     echo -e "Put all your ${colorYELLOW}YELLOW${colorNO} letters, if any, in format \"3e 4r\""
     read -p "> " YELLOW
     if [[ x${YELLOW} != "x" ]]; then
-        key=""
-        for i in $(seq 1 ${LEN}); do
-            key=${key}"?"
-        done
         for yellow in ${YELLOW}; do
+            key=""
+            for i in $(seq 1 ${LEN}); do
+                key=${key}"?"
+            done
             pos=$(echo ${yellow} | cut -c1-1)
             let=$(echo ${yellow} | cut -c2-2 | tr [:upper:] [:lower:])
 
@@ -88,21 +88,20 @@ function iterate() {
             fi
 
             key=$(printf "%s\n" "${key}" | sed s/./${let}/${pos})
-        done
-        while read line; do
-            if [[ $line = *${key} ]]; then
-                echo >/dev/null # ignoring match
-            else
-                echo "$line" >> ${FILE3}
+            while read line; do
+                if [[ $line = *${key} ]]; then
+                    echo >/dev/null # ignoring match
+                else
+                    echo "$line" >> ${FILE3}
+                fi
+            done < ${FILE2}
+            mv ${FILE3} ${FILE2} >/dev/null 2>&1
+            if [[ $? != 0 ]]; then
+                echo "Sorry, no variants left for your input :-("
+                exit 0
             fi
-        done < ${FILE2}
-        mv ${FILE3} ${FILE2} >/dev/null 2>&1
-        if [[ $? != 0 ]]; then
-            echo "Sorry, no variants left for your input :-("
-            exit 0
-        else
-            echo "Now you still have $(cat ${FILE2} | wc -l) words in the dict."
-        fi
+        done
+        echo "Now you still have $(cat ${FILE2} | wc -l) words in the dict."
     fi
 
     echo -e "Put all your ${colorGREY}GREY${colorNO} letters together, if any"
