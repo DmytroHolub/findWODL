@@ -124,12 +124,12 @@ function iterate() {
 }
 
 # Main
-if [[ $# == 1 && $1 > 3 && $1 < 9 ]];then
+if [[ $# == 1 && $1 > 2 && $1 < 9 ]];then
     LEN=$1
 else
     read -p "Enter letter count: " LEN
     if [[ ${LEN} < 3 || ${LEN} > 8 ]];then
-        echo "Seems wrong input"
+        echo "Wrong input"
         exit 1
     fi
 fi
