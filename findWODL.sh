@@ -114,6 +114,7 @@ function iterate() {
                 cat ${FILE2} | grep -v ${let} > ${FILE3}
                 mv ${FILE3} ${FILE2}
             else
+#TODO: more precise handling is needed here: drop words with same letters found twice+ times
                 echo "Not filtering grey letter ${let} due to it's not only grey"
             fi
         done
